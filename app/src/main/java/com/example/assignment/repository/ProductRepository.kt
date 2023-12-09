@@ -11,7 +11,6 @@ import retrofit2.Response
 
 class ProductRepository {
     private val productLiveData = MutableLiveData<List<Product>>()
-    private val productDetailsLiveData = MutableLiveData<Product?>()
 
     fun getProductList(): LiveData<List<Product>> {
         RetrofitInstance.api.getProductList().enqueue(object : Callback<ProductList> {
@@ -29,23 +28,13 @@ class ProductRepository {
     }
 
     fun getProductDetail(id: Int): LiveData<Product?> {
+        val productDetailsLiveData = MutableLiveData<Product?>()
+
         RetrofitInstance.api.getProductDetail(id).enqueue(object : Callback<ProductList> {
             override fun onResponse(call: Call<ProductList>, response: Response<ProductList>) {
-                if (response.isSuccessful) {
-                    val productList = response.body()?.products
-                    if (!productList.isNullOrEmpty()) {
-                        // Find the product with the matching id
-                        val product = productList.find { it.id == id }
-                        if (product != null) {
-                            productDetailsLiveData.value = product
-                        } else {
-                            // Handle the case when the product with the given id is not found
-                        }
-                    } else {
-                        // Handle the case when the product list is null or empty
-                    }
-                } else {
-                    // Handle the case when the response is not successful
+                handleResponse(response) { productList ->
+                    val product = productList.find { it.id == id }
+                    productDetailsLiveData.value = product
                 }
             }
 
@@ -53,6 +42,21 @@ class ProductRepository {
                 // Handle failure if needed
             }
         })
+
         return productDetailsLiveData
     }
+
+    private inline fun handleResponse(
+        response: Response<ProductList>,
+        onSuccess: (List<Product>) -> Unit
+    ) {
+        if (response.isSuccessful) {
+            val productList = response.body()?.products.orEmpty()
+            onSuccess(productList)
+        } else {
+            // Handle the case when the response is not successful
+        }
+    }
+
+
 }
