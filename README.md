@@ -9,6 +9,7 @@
 - Retrofit (API Integration)
 - ImageLoading through Glide
 - RecyclerView
+- Dagger Hilt
 
 ### Demo Video 📺
 
